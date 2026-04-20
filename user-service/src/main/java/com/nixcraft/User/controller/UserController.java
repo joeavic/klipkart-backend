@@ -7,6 +7,8 @@ import com.nixcraft.User.service.AuthService;
 import com.nixcraft.User.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,7 @@ import java.util.UUID;
 
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 public class UserController {
 
     @Autowired
@@ -35,27 +37,25 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDTO> addEmployee
-            (@RequestBody @Valid UserRequestDTO e, HttpServletRequest request ) {
-
-        String header = request.getHeader("Authorization");
-
-        if(header != null && header.startsWith("Bearer "))
-        {
-            String token = header.substring(7);
-            if(authService.validateToken(token)){
-                log.info("VALIDATION DONE");
-                userService.addEmployee(e);
-            }
-
-        }
-
-        return ResponseEntity.ok(null);
+    public ResponseEntity<UserResponseDTO> addUser
+            (@RequestBody @Valid UserRequestDTO e) {
+        UserResponseDTO user = userService.addEmployee(e);
+        return ResponseEntity.ok(user);
     }
 
     @DeleteMapping
     public ResponseEntity<User> deleteEmployee(@RequestParam Long id){
         return ResponseEntity.ok(userService.deleteEmployee(id));
+    }
+
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<UserResponseDTO> getUserByEmail(@PathVariable
+           @NotBlank(message = "Email cannot be empty")
+           @Email(message = "Invalid Email format")
+           String email) {
+
+        return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 
 }

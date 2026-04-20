@@ -4,6 +4,7 @@ package com.nixcraft.User.service;
 import com.nixcraft.User.dto.UserRequestDTO;
 import com.nixcraft.User.dto.UserResponseDTO;
 import com.nixcraft.User.entity.User;
+import com.nixcraft.User.exception.UserNotFoundException;
 import com.nixcraft.User.kafka.event.UserEvent;
 import com.nixcraft.User.kafka.producer.UserProducer;
 import com.nixcraft.User.mapper.UserMapper;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 
 @Service
@@ -32,6 +32,8 @@ public class UserService {
     @Autowired
     private AuthService authService;
 
+    private String dbConnection;
+
     public List<UserResponseDTO> getEmployees() {
 
         log.info("Request to get all Employees Data received {}", Instant.now());
@@ -43,7 +45,7 @@ public class UserService {
         log.info("Employee List {}", nameList);
 
         return employeeList.stream()
-                .map(UserMapper::toEmployeeResponseDTO).toList();
+                .map(UserMapper::toUserResponseDTO).toList();
     }
 
     public UserResponseDTO addEmployee(UserRequestDTO e) {
@@ -66,7 +68,7 @@ public class UserService {
         );
         userProducer.publishEmployeeCreated(event);
 
-        return UserMapper.toEmployeeResponseDTO(saved);
+        return UserMapper.toUserResponseDTO(saved);
     }
 
     public User deleteEmployee(Long id) {
@@ -78,4 +80,11 @@ public class UserService {
         return e;
     }
 
+    public UserResponseDTO getUserByEmail(String email)
+    {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email " + email));
+
+        return UserMapper.toUserResponseDTO(user);
+    }
 }
